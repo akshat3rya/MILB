@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MILB</title>
+
+    <style>
+        body {
+            font-family: monospace;
+            background-color: white;
+            color: black;
+            margin: 0;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        input, select {
+            background-color: white;
+            color: black;
+            border: 1px solid black;
+            padding: 5px;
+            margin: 5px;
+        }
+        .question {
+            border-bottom: 1px solid black;
+            padding: 10px 0;
+        }
+        .year {
+            font-size: 0.9em;
+            color: gray;
+        }
+        .answer {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f0f0;
+        }
+        button {
+            background-color: white;
+            color: black;
+            border: 1px solid black;
+            cursor: pointer;
+            padding: 5px 10px;
+            margin: 5px 0;
+        }
+        img {
+            max-width: 100%;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+        }
+        .pagination {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .pagination button:disabled {
+            color: grey;
+            cursor: not-allowed;
+        }
+    </style>
+
+    <!-- KaTeX -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+</head>
+<body>
+    <h1>Man, I Love Bodhisatwa</h1>
+
+    <!-- Filters -->
+    <div>
+        <label for="textSearch">Text Search:</label>
+        <input type="text" id="textSearch" placeholder="Enter text...">
+    </div>
+    <div>
+        <label for="subjectSelect">Subject:</label>
+        <select id="subjectSelect"><option value="">All</option></select>
+        <label for="chapterSelect">Topic:</label>
+        <select id="chapterSelect"><option value="">All</option></select>
+        <label for="yearSelect">Year:</label>
+        <select id="yearSelect"><option value="">All</option></select>
+    </div>
+
+    <!-- Questions -->
+    <div id="questions"></div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+        <button id="prevPage" disabled>Previous</button>
+        <span id="pageInfo"></span>
+        <button id="nextPage">Next</button>
+    </div>
+
+    <script>
+        let questions = [];
+        let filteredQuestions = [];
+        let currentPage = 1;
+        const questionsPerPage = 25;
+
+        fetch('master.json')
+            .then(r => r.json())
+            .then(jsonData => {
+                questions = jsonData;
+                filteredQuestions = questions;
+                init();
+            })
+            .catch(err => {
+                document.getElementById('questions').innerHTML = `<p>Error loading data.json: ${err.message}</p>`;
+            });
+
+        function init() {
+            const subjects = [...new Set(questions.map(q => q.subject))].sort();
+            const chapters = [...new Set(questions.map(q => q.chapter))].sort();
+            const years = [...new Set(questions.map(q => q.year))].sort();
+
+            const subjectSelect = document.getElementById('subjectSelect');
+            subjects.forEach(sub => subjectSelect.appendChild(new Option(sub, sub)));
+
+            const chapterSelect = document.getElementById('chapterSelect');
+            chapters.forEach(chap => chapterSelect.appendChild(new Option(chap, chap)));
+
+            const yearSelect = document.getElementById('yearSelect');
+            years.forEach(yr => yearSelect.appendChild(new Option(yr, yr)));
+
+            document.getElementById('textSearch').addEventListener('input', () => { currentPage = 1; filterQuestions(); });
+            subjectSelect.addEventListener('change', () => { currentPage = 1; filterQuestions(); });
+            chapterSelect.addEventListener('change', () => { currentPage = 1; filterQuestions(); });
+            yearSelect.addEventListener('change', () => { currentPage = 1; filterQuestions(); });
+
+            document.getElementById('prevPage').addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderQuestions(); } });
+            document.getElementById('nextPage').addEventListener('click', () => { if (currentPage < Math.ceil(filteredQuestions.length / questionsPerPage)) { currentPage++; renderQuestions(); } });
+
+            renderQuestions();
+        }
+
+        function filterQuestions() {
+            const text = document.getElementById('textSearch').value.toLowerCase();
+            const subject = document.getElementById('subjectSelect').value;
+            const chapter = document.getElementById('chapterSelect').value;
+            const year = document.getElementById('yearSelect').value;
+
+            filteredQuestions = questions.filter(q => {
+                const textMatch = !text || (q.question.toLowerCase().includes(text) || q.explanation.toLowerCase().includes(text));
+                const subjectMatch = !subject || q.subject === subject;
+                const chapterMatch = !chapter || q.chapter === chapter;
+                const yearMatch = !year || q.year === year;
+                return textMatch && subjectMatch && chapterMatch && yearMatch;
+            });
+
+            currentPage = 1;
+            renderQuestions();
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('questions');
+            container.innerHTML = '';
+
+            const start = (currentPage - 1) * questionsPerPage;
+            const end = start + questionsPerPage;
+            const pageQuestions = filteredQuestions.slice(start, end);
+
+            if (pageQuestions.length === 0) {
+                container.innerHTML = '<p>No questions match the filters.</p>';
+                updatePagination();
+                return;
+            }
+
+            pageQuestions.forEach(q => {
+                const div = document.createElement('div');
+                div.className = 'question';
+
+                // Question text
+                const qText = document.createElement('p');
+                qText.innerHTML = `<strong>#${q.id}:</strong> ${q.question}`;
+                div.appendChild(qText);
+
+                // Year
+                const year = document.createElement('p');
+                year.className = 'year';
+                year.textContent = `Year: ${q.year}`;
+                div.appendChild(year);
+
+                // Image if exists
+                if (q.image) {
+                    const img = document.createElement('img');
+                    img.src = q.image;
+                    img.alt = `Question ${q.id}`;
+                    div.appendChild(img);
+                }
+
+                // Options
+                if (q.options && q.options.length > 0) {
+                    const optList = document.createElement('ul');
+                    optList.className = 'options';
+                    q.options.forEach(opt => {
+                        const li = document.createElement('li');
+                        li.innerHTML = opt;   // Insert raw HTML
+                        optList.appendChild(li);
+
+                        // Render KaTeX inside this li
+                        renderMathInElement(li, {
+                            delimiters: [
+                                {left: "$$", right: "$$", display: true},
+                                {left: "$", right: "$", display: false}
+                            ]
+                        });
+                    });
+                    div.appendChild(optList);
+                }
+                // Show Explanation button
+                const button = document.createElement('button');
+                button.textContent = 'Show Explanation';
+                div.appendChild(button);
+
+                // Explanation
+                const answerDiv = document.createElement('div');
+                answerDiv.className = 'answer';
+
+                // Remove "Question XX Explanation:" prefix if present
+                let explanationText = q.explanation || '';
+                explanationText = explanationText.replace(/^Question\s*\d+\s*Explanation:\s*/i, '');
+
+                const expSpan = document.createElement('span');
+                expSpan.textContent = explanationText;
+                answerDiv.appendChild(expSpan);
+                div.appendChild(answerDiv);
+
+                button.addEventListener('click', () => {
+                    const isHidden = answerDiv.style.display === 'none' || !answerDiv.style.display;
+                    answerDiv.style.display = isHidden ? 'block' : 'none';
+                    button.textContent = isHidden ? 'Hide Explanation' : 'Show Explanation';
+
+                    renderMathInElement(answerDiv, {
+                        delimiters: [
+                            {left: '$$', right: '$$', display: true},
+                            {left: '$', right: '$', display: false},
+                            {left: '[latex]', right: '[/latex]', display: true}
+                        ]
+                    });
+                });
+
+                container.appendChild(div);
+
+                // Render math in question text
+                renderMathInElement(qText, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false},
+                        {left: '[latex]', right: '[/latex]', display: true}
+                    ]
+                });
+            });
+
+            updatePagination();
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredQuestions.length / questionsPerPage);
+            document.getElementById('prevPage').disabled = currentPage === 1;
+            document.getElementById('nextPage').disabled = currentPage === totalPages || totalPages === 0;
+            document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages || 1}`;
+        }
+    </script>
+</body>
+</html>
