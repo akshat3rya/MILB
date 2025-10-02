@@ -5,133 +5,197 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MILB</title>
 
-    <style>
-        body {
-            font-family: monospace;
-            background-color: white;
-            color: black;
-            margin: 0;
-            padding: 20px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        input, select {
-            background-color: white;
-            color: black;
-            border: 1px solid black;
-            padding: 5px;
-            margin: 5px;
-        }
-        .question {
-            border-bottom: 1px solid black;
-            padding: 10px 0;
-        }
-        .year {
-            font-size: 0.9em;
-            color: gray;
-        }
-        .answer {
-            display: none;
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #f0f0f0;
-        }
-        button {
-            background-color: white;
-            color: black;
-            border: 1px solid black;
-            cursor: pointer;
-            padding: 5px 10px;
-            margin: 5px 0;
-        }
-        img {
-            max-width: 100%;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-        }
-        .pagination {
-            margin: 20px 0;
-            text-align: center;
-        }
-        .pagination button:disabled {
-            color: grey;
-            cursor: not-allowed;
-        }
-    </style>
 
-    <!-- KaTeX -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+<style>
+    body {
+        font-family: monospace;
+        margin: 0;
+        padding: 20px;
+        max-width: 800px;
+        margin: 0 auto;
+        transition: background-color 0.3s, color 0.3s;
+    }
+    input, select, button {
+        padding: 5px;
+        margin: 5px;
+        border: 1px solid;
+        transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    }
+    .question {
+        border-bottom: 1px solid;
+        padding: 10px 0;
+    }
+    .year {
+        font-size: 0.9em;
+        color: gray;
+    }
+    .answer {
+        display: none;
+        margin-top: 10px;
+        padding: 10px;
+        transition: background-color 0.3s, color 0.3s;
+    }
+    img {
+        max-width: 100%;
+        margin: 10px 0;
+        border: 1px solid #ddd;
+    }
+    .pagination {
+        margin: 20px 0;
+        text-align: center;
+    }
+    .pagination button:disabled {
+        color: grey;
+        cursor: not-allowed;
+    }
+
+    /* Theme Styles */
+    body.light {
+        background-color: white;
+        color: black;
+    }
+    body.light input, body.light select, body.light button {
+        background-color: white;
+        color: black;
+        border-color: black;
+    }
+    body.light .question {
+        border-color: black;
+    }
+    body.light .answer {
+        background-color: #f0f0f0;
+        color: black;
+    }
+
+    body.warm {
+        background-color: #fff8f0;
+        color: #333;
+    }
+    body.warm input, body.warm select, body.warm button {
+        background-color: #fff3e6;
+        color: #333;
+        border-color: #b98c6d;
+    }
+    body.warm .question {
+        border-color: #b98c6d;
+    }
+    body.warm .answer {
+        background-color: #fff0e0;
+        color: #333;
+    }
+
+    body.dark {
+        background-color: #121212;
+        color: #e0e0e0;
+    }
+    body.dark input, body.dark select, body.dark button {
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+        border-color: #888;
+    }
+    body.dark .question {
+        border-color: #888;
+    }
+    body.dark .answer {
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+    }
+
+    /* Theme selector */
+    #themeSelector {
+        float: right;
+    }
+</style>
+
+<!-- KaTeX -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 </head>
-<body>
-    <h1>Man, I Love Bodhisatwa</h1>
+<body class="warm">
 
-    <!-- Filters -->
-    <div>
-        <label for="textSearch">Text Search:</label>
-        <input type="text" id="textSearch" placeholder="Enter text...">
-    </div>
-    <div>
-        <label for="subjectSelect">Subject:</label>
-        <select id="subjectSelect"><option value="">All</option></select>
-        <label for="chapterSelect">Topic:</label>
-        <select id="chapterSelect"><option value="">All</option></select>
-        <label for="yearSelect">Year:</label>
-        <select id="yearSelect"><option value="">All</option></select>
-    </div>
+<h1>Man, I Love Bodhisatwa</h1>
 
-    <!-- Questions -->
-    <div id="questions"></div>
+<!-- Theme Selector -->
+<div>
+    <select id="themeSelector">
+        <option value="light">Light</option>
+        <option value="warm" selected>Warm</option>
+        <option value="dark">Dark</option>
+    </select>
+</div>
 
-    <!-- Pagination -->
-    <div class="pagination">
-        <button id="prevPage" disabled>Previous</button>
-        <span id="pageInfo"></span>
-        <button id="nextPage">Next</button>
-    </div>
+<!-- Filters -->
+<div>
+    <label for="textSearch">Text Search:</label>
+    <input type="text" id="textSearch" placeholder="Enter text...">
+</div>
+<div>
+    <label for="subjectSelect">Subject:</label>
+    <select id="subjectSelect"><option value="">All</option></select>
+    <label for="chapterSelect">Topic:</label>
+    <select id="chapterSelect"><option value="">All</option></select>
+    <label for="yearSelect">Year:</label>
+    <select id="yearSelect"><option value="">All</option></select>
+</div>
 
-    <script>
-        let questions = [];
-        let filteredQuestions = [];
-        let currentPage = 1;
-        const questionsPerPage = 25;
+<!-- Questions -->
+<div id="questions"></div>
 
-        fetch('master.json')
-            .then(r => r.json())
-            .then(jsonData => {
-                questions = jsonData;
-                filteredQuestions = questions;
-                init();
-            })
-            .catch(err => {
-                document.getElementById('questions').innerHTML = `<p>Error loading data.json: ${err.message}</p>`;
-            });
+<!-- Pagination -->
+<div class="pagination">
+    <button id="prevPage" disabled>Previous</button>
+    <span id="pageInfo"></span>
+    <button id="nextPage">Next</button>
+</div>
 
-        function init() {
-            const subjects = [...new Set(questions.map(q => q.subject))].sort();
-            const chapters = [...new Set(questions.map(q => q.chapter))].sort();
-            const years = [...new Set(questions.map(q => q.year))].sort();
+<script>
+let questions = [];
+let filteredQuestions = [];
+let currentPage = 1;
+const questionsPerPage = 25;
 
-            const subjectSelect = document.getElementById('subjectSelect');
-            subjects.forEach(sub => subjectSelect.appendChild(new Option(sub, sub)));
+fetch('master.json')
+    .then(r => r.json())
+    .then(jsonData => {
+        questions = jsonData;
+        filteredQuestions = questions;
+        init();
+    })
+    .catch(err => {
+        document.getElementById('questions').innerHTML = `<p>Error loading master.json: ${err.message}</p>`;
+    });
 
-            const chapterSelect = document.getElementById('chapterSelect');
-            chapters.forEach(chap => chapterSelect.appendChild(new Option(chap, chap)));
+// Theme toggle
+document.getElementById('themeSelector').addEventListener('change', e => {
+    document.body.className = e.target.value;
+});
 
-            const yearSelect = document.getElementById('yearSelect');
-            years.forEach(yr => yearSelect.appendChild(new Option(yr, yr)));
+function init() {
+    const subjects = [...new Set(questions.map(q => q.subject))].sort();
+    const chapters = [...new Set(questions.map(q => q.chapter))].sort();
+    const years = [...new Set(questions.map(q => q.year))].sort();
 
-            document.getElementById('textSearch').addEventListener('input', () => { currentPage = 1; filterQuestions(); });
-            subjectSelect.addEventListener('change', () => { currentPage = 1; filterQuestions(); });
-            chapterSelect.addEventListener('change', () => { currentPage = 1; filterQuestions(); });
-            yearSelect.addEventListener('change', () => { currentPage = 1; filterQuestions(); });
+    const subjectSelect = document.getElementById('subjectSelect');
+    subjects.forEach(sub => subjectSelect.appendChild(new Option(sub, sub)));
 
-            document.getElementById('prevPage').addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderQuestions(); } });
-            document.getElementById('nextPage').addEventListener('click', () => { if (currentPage < Math.ceil(filteredQuestions.length / questionsPerPage)) { currentPage++; renderQuestions(); } });
+    const chapterSelect = document.getElementById('chapterSelect');
+    chapters.forEach(chap => chapterSelect.appendChild(new Option(chap, chap)));
 
-            renderQuestions();
-        }
+    const yearSelect = document.getElementById('yearSelect');
+    years.forEach(yr => yearSelect.appendChild(new Option(yr, yr)));
+
+    document.getElementById('textSearch').addEventListener('input', () => { currentPage = 1; filterQuestions(); });
+    subjectSelect.addEventListener('change', () => { currentPage = 1; filterQuestions(); });
+    chapterSelect.addEventListener('change', () => { currentPage = 1; filterQuestions(); });
+    yearSelect.addEventListener('change', () => { currentPage = 1; filterQuestions(); });
+
+    document.getElementById('prevPage').addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderQuestions(); } });
+    document.getElementById('nextPage').addEventListener('click', () => { if (currentPage < Math.ceil(filteredQuestions.length / questionsPerPage)) { currentPage++; renderQuestions(); } });
+
+    renderQuestions();
+}
+
 
         function filterQuestions() {
             const text = document.getElementById('textSearch').value.toLowerCase();
